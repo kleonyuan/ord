@@ -105,6 +105,22 @@ impl Settings {
       _ => {}
     };
 
+    if settings.bitcoin_rpc_limit == Some(0) {
+      bail!("bitcoin-rpc-limit must be greater than zero");
+    }
+
+    if settings.commit_interval == Some(0) {
+      bail!("commit-interval must be greater than zero");
+    }
+
+    if settings.savepoint_interval == Some(0) {
+      bail!("savepoint-interval must be greater than zero");
+    }
+
+    if settings.max_savepoints == Some(0) {
+      bail!("max-savepoints must be greater than zero");
+    }
+
     Ok(settings)
   }
 
@@ -671,6 +687,24 @@ mod tests {
       .to_string(),
       "no bitcoin RPC username specified"
     );
+  }
+
+  #[test]
+  fn zero_values_for_nonzero_settings_are_errors() {
+    for (argument, setting) in [
+      ("--bitcoin-rpc-limit", "bitcoin-rpc-limit"),
+      ("--commit-interval", "commit-interval"),
+      ("--savepoint-interval", "savepoint-interval"),
+      ("--max-savepoints", "max-savepoints"),
+    ] {
+      let options = Options::try_parse_from(["ord", argument, "0"]).unwrap();
+      let error = Settings::merge(options, Default::default()).unwrap_err();
+
+      assert_eq!(
+        error.to_string(),
+        format!("{setting} must be greater than zero")
+      );
+    }
   }
 
   #[test]
